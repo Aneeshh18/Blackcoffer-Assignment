@@ -1,6 +1,6 @@
-const mongoose = require('mongoose');
+const mongoose = require("mongoose");
 
-function connectDB(){
+function connectDB() {
   const options = {
     useNewUrlParser: true,
     useUnifiedTopology: true,
@@ -8,19 +8,19 @@ function connectDB(){
     maxPoolSize: 50,
     socketTimeoutMS: 60000,
   };
-  
+
   // const mongoURL = process.env.MONGODB_URL;
   const mongoURL = "mongodb://0.0.0.0:27017/coffee";
-  
-  mongoose.connect(mongoURL, options) 
+
+  mongoose
+    .connect(mongoURL, options)
     .then(() => {
-      console.log('Database connected successfully!');
+      console.log("Database connected successfully!");
     })
     .catch((err) => {
-      console.error('Error connecting to the database', err);
-      process.exit(1); 
+      console.error("Error connecting to the database", err);
+      process.exit(1);
     });
 }
-
 
 module.exports = connectDB;

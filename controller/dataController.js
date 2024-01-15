@@ -1,189 +1,205 @@
 const asyncHandler = require("express-async-handler");
 const CompanyData = require("../model/dataModel");
-const moment = require('moment/moment')
-
+const moment = require("moment/moment");
 
 const getAllData = asyncHandler(async (req, res) => {
-    const { added, sector, end_year, topic, region, start_year, published, country, pestle, source } = req.query;
-    let arr = []
-    if(added){
-        const a = {added:      { $regex: added,      $options: "i" } }
-        arr.push(a)
-    }
+  const {
+    added,
+    sector,
+    end_year,
+    topic,
+    region,
+    start_year,
+    published,
+    country,
+    pestle,
+    source,
+  } = req.query;
+  let arr = [];
+  if (added) {
+    const a = { added: { $regex: added, $options: "i" } };
+    arr.push(a);
+  }
 
-    if(sector){
-        const a = {sector:      { $regex: sector,      $options: "i" } }
-        arr.push(a)
-    }
-    
-    if(topic){
-        const a = {topic:      { $regex: topic,      $options: "i" } }
-        arr.push(a)
-    }
+  if (sector) {
+    const a = { sector: { $regex: sector, $options: "i" } };
+    arr.push(a);
+  }
 
-    if(region){
-        const a = {region:     { $regex: region,     $options: "i" } }
-        arr.push(a)
-    }
+  if (topic) {
+    const a = { topic: { $regex: topic, $options: "i" } };
+    arr.push(a);
+  }
 
-    if(published){
-        const a = {published:  { $regex: published,  $options: "i" } }
-        arr.push(a)
-    }
-    if(country){
-        const a = {country:    { $regex: country,    $options: "i" } }
-        arr.push(a)
-    }
-    if(pestle){
-        const a = {pestle:     { $regex: pestle,     $options: "i" } }
-        arr.push(a)
-    }
-    if(source){
-        const a = {source:     { $regex: source,     $options: "i" } }
-        arr.push(a)
-    }
+  if (region) {
+    const a = { region: { $regex: region, $options: "i" } };
+    arr.push(a);
+  }
 
-    const keyword =arr.length>0?{
-        $and:[
-          ...arr
-        ] 
-    }:{}
+  if (published) {
+    const a = { published: { $regex: published, $options: "i" } };
+    arr.push(a);
+  }
+  if (country) {
+    const a = { country: { $regex: country, $options: "i" } };
+    arr.push(a);
+  }
+  if (pestle) {
+    const a = { pestle: { $regex: pestle, $options: "i" } };
+    arr.push(a);
+  }
+  if (source) {
+    const a = { source: { $regex: source, $options: "i" } };
+    arr.push(a);
+  }
 
-    let CompanyDatas = await CompanyData.find(keyword)
-    let Data = await CompanyData.find()
+  const keyword =
+    arr.length > 0
+      ? {
+          $and: [...arr],
+        }
+      : {};
 
+  let CompanyDatas = await CompanyData.find(keyword);
+  let Data = await CompanyData.find();
 
+  if (start_year) {
+    CompanyDatas = CompanyDatas.filter((d) => d.start_year === start_year);
+  }
 
-    if(start_year){
-        CompanyDatas = CompanyDatas.filter((d)=>  d.start_year === start_year)
-    }
+  if (end_year) {
+    CompanyDatas = CompanyDatas.filter((d) => d.end_year === end_year);
+  }
 
-    if(end_year){
-        CompanyDatas = CompanyDatas.filter((d)=> d.end_year === end_year)
-    }
-
-    res.send({
-        length: CompanyDatas.length,
-        Added: datefield(Data, "added"),
-        Sector: filterOption(Data, "sector"),
-        End_year: filterOption(Data, "end_year"),
-        Topic: filterOption(Data, "topic"),
-        Region: filterOption(Data, "region"),
-        Start_year: filterOption(Data, "start_year"),
-        Published: datefield(Data, "published"),
-        Country: filterOption(Data, "country"),
-        Pestle: filterOption(Data, "pestle"),
-        Source: filterOption(Data, "source"),
-        totalLikelihood: fieldTotal(CompanyDatas, "likelihood"),
-        totalIntensity: fieldTotal(CompanyDatas, "intensity"),
-        totalRelevance: fieldTotal(CompanyDatas, "relevance"),
-        totalCountry: unicfield(CompanyDatas, "country").length,
-        totalRegion: unicfield(CompanyDatas, "region").length,
-        totalTopic: unicfield(CompanyDatas, "topic").length,
-        IntensitySector: fieldAnalysis(CompanyDatas, "intensity", "sector"),
-        likelihoodSector: fieldAnalysis(CompanyDatas, "likelihood", "sector"),
-        topicRepited: repitedField(CompanyDatas, "topic"),
-        countryContribute: contribution(CompanyDatas, "country"),
-        regionContribute: contribution(CompanyDatas, "region")
-    });
+  res.send({
+    length: CompanyDatas.length,
+    Added: datefield(Data, "added"),
+    Sector: filterOption(Data, "sector"),
+    End_year: filterOption(Data, "end_year"),
+    Topic: filterOption(Data, "topic"),
+    Region: filterOption(Data, "region"),
+    Start_year: filterOption(Data, "start_year"),
+    Published: datefield(Data, "published"),
+    Country: filterOption(Data, "country"),
+    Pestle: filterOption(Data, "pestle"),
+    Source: filterOption(Data, "source"),
+    totalLikelihood: fieldTotal(CompanyDatas, "likelihood"),
+    totalIntensity: fieldTotal(CompanyDatas, "intensity"),
+    totalRelevance: fieldTotal(CompanyDatas, "relevance"),
+    totalCountry: unicfield(CompanyDatas, "country").length,
+    totalRegion: unicfield(CompanyDatas, "region").length,
+    totalTopic: unicfield(CompanyDatas, "topic").length,
+    IntensitySector: fieldAnalysis(CompanyDatas, "intensity", "sector"),
+    likelihoodSector: fieldAnalysis(CompanyDatas, "likelihood", "sector"),
+    topicRepited: repitedField(CompanyDatas, "topic"),
+    countryContribute: contribution(CompanyDatas, "country"),
+    regionContribute: contribution(CompanyDatas, "region"),
+  });
 });
 
-const contribution = (data, pv) =>{
-    let arr = repitedField(data, pv)
-    let total = 0;
-    arr.map((d)=> {total = total + d.value});
-    arr.map((d)=>{
-        d["percentage"] = d.value*100/total
-    })
-    return arr
-}
+const contribution = (data, pv) => {
+  let arr = repitedField(data, pv);
+  let total = 0;
+  arr.map((d) => {
+    total = total + d.value;
+  });
+  arr.map((d) => {
+    d["percentage"] = (d.value * 100) / total;
+  });
+  return arr;
+};
 
-const filterOption = (data, pv) =>{
-    let ud = unicfield(data, pv)
-    let arr = []
-    ud.map((d,i)=>{
-        arr[i] = {value: d, label: d}
-    })
-    return arr
-}
+const filterOption = (data, pv) => {
+  let ud = unicfield(data, pv);
+  let arr = [];
+  ud.map((d, i) => {
+    arr[i] = { value: d, label: d };
+  });
+  return arr;
+};
 
-const repitedField = (data, pv)=>{
-    let ud = unicfield(data, pv)
-    let arr = []
-    ud.map((d)=> {
-        arr.push({name: d, value: data.filter((di)=> di[pv] === d).length})
-    })
+const repitedField = (data, pv) => {
+  let ud = unicfield(data, pv);
+  let arr = [];
+  ud.map((d) => {
+    arr.push({ name: d, value: data.filter((di) => di[pv] === d).length });
+  });
 
-    arr.push({name: "unknow", value: data.filter((di)=> di[pv] === "").length})
-    arr.sort((a, b) => b.value - a.value)
-    return arr.slice(0, 5)
-}
+  arr.push({
+    name: "unknow",
+    value: data.filter((di) => di[pv] === "").length,
+  });
+  arr.sort((a, b) => b.value - a.value);
+  return arr.slice(0, 5);
+};
 
 const unicfield = (data, pv) => {
-  let arr = []
-  data.map((d)=>{
-    const arrHasValue= arr.some((i) => {
-      return d[pv] === i})
-    if(arrHasValue){
-      arr = [...arr]
-    }else{
-      d[pv]? arr = [...arr, d[pv]]: arr = [...arr]
+  let arr = [];
+  data.map((d) => {
+    const arrHasValue = arr.some((i) => {
+      return d[pv] === i;
+    });
+    if (arrHasValue) {
+      arr = [...arr];
+    } else {
+      d[pv] ? (arr = [...arr, d[pv]]) : (arr = [...arr]);
     }
-  })
-  arr = arr.sort((a, b) => a - b)
+  });
+  arr = arr.sort((a, b) => a - b);
   return arr;
-}
+};
 const datefield = (data, pv) => {
-    let arr = []
-    let newArr = []
-    data.map((d)=>{
-        let year = moment(d[pv], "MMMM, DD YYYY HH:mm:ss").format('YYYY')
-        const arrHasValue= arr.some((i) => {
-        return year === i})
-        if(arrHasValue){
-        arr = [...arr]
-        }else{
-        d[pv]? arr = [...arr, year]: arr = [...arr]
-        }
-    })
-  arr = arr.sort()
-    arr.map((d,i)=>{
-        newArr[i] = {value: d, label: d}
-    })
+  let arr = [];
+  let newArr = [];
+  data.map((d) => {
+    let year = moment(d[pv], "MMMM, DD YYYY HH:mm:ss").format("YYYY");
+    const arrHasValue = arr.some((i) => {
+      return year === i;
+    });
+    if (arrHasValue) {
+      arr = [...arr];
+    } else {
+      d[pv] ? (arr = [...arr, year]) : (arr = [...arr]);
+    }
+  });
+  arr = arr.sort();
+  arr.map((d, i) => {
+    newArr[i] = { value: d, label: d };
+  });
   return newArr;
-}
+};
 
 const fieldTotal = (data, pv) => {
-    let arr = [];
-    let sum = 0;
-    data.map((d)=>d[pv]!==""? arr.push(d[pv]): arr)
-    arr.map((d)=>{
-        sum = sum + d
-    })
-    
-    return sum;
-}
+  let arr = [];
+  let sum = 0;
+  data.map((d) => (d[pv] !== "" ? arr.push(d[pv]) : arr));
+  arr.map((d) => {
+    sum = sum + d;
+  });
+
+  return sum;
+};
 
 const fieldAnalysis = (data, xValue, yValue) => {
-    let arr = unicfield(data, yValue);
-    let arrVal = []
-    arr.map((d)=>{
-        let sum = 0;
-        let arrData = data.filter((di)=>di[yValue] === d)
-        arrData.map((d)=>{
-            sum = sum + d[xValue]
-        })
-        arrVal.push({name: d, value: sum})
-    })
+  let arr = unicfield(data, yValue);
+  let arrVal = [];
+  arr.map((d) => {
     let sum = 0;
-    let unknow = data.filter((di)=>di[yValue] === "")
-    unknow.map((d)=>{
-        sum = sum + d[xValue]
-    })
-    arrVal.push({name: "unknow", value: sum})
-    arrVal.sort((a, b) => b.value - a.value)
+    let arrData = data.filter((di) => di[yValue] === d);
+    arrData.map((d) => {
+      sum = sum + d[xValue];
+    });
+    arrVal.push({ name: d, value: sum });
+  });
+  let sum = 0;
+  let unknow = data.filter((di) => di[yValue] === "");
+  unknow.map((d) => {
+    sum = sum + d[xValue];
+  });
+  arrVal.push({ name: "unknow", value: sum });
+  arrVal.sort((a, b) => b.value - a.value);
 
-    return arrVal.slice(0, 5)
-}
+  return arrVal.slice(0, 5);
+};
 
-  module.exports = { getAllData};
+module.exports = { getAllData };
